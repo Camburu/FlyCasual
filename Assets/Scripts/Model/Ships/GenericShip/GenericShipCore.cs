@@ -140,13 +140,11 @@ namespace Ship
             get
             {
                 int result = agility;
-                if (AfterGetAgility != null) AfterGetAgility(ref result);
                 result = Mathf.Max(result, 0);
                 return result;
             }
             protected set
             {
-                value = Mathf.Max(value, 0);
                 agility = value;
             }
         }
@@ -194,6 +192,7 @@ namespace Ship
         public GenericShip()
         {
             IconicPilots = new Dictionary<Faction, Type>();
+            RequiredMods = new List<Type>();
             factions = new List<Faction>();
             SoundFlyPaths = new List<string> ();
             Maneuvers = new Dictionary<string, Movement.ManeuverColor>();
@@ -315,7 +314,7 @@ namespace Ship
 
         public void ChangeAgilityBy(int value)
         {
-            Agility += value;
+            agility += value;
             if (AfterStatsAreChanged != null) AfterStatsAreChanged(this);
         }
 

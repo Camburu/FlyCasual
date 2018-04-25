@@ -33,12 +33,12 @@ namespace Abilities
     {
         public override void ActivateAbility()
         {
-            Phases.OnCombatPhaseStart += RegisterAbility;
+            Phases.OnCombatPhaseStart_Triggers += RegisterAbility;
         }
 
         public override void DeactivateAbility()
         {
-            Phases.OnCombatPhaseStart -= RegisterAbility;
+            Phases.OnCombatPhaseStart_Triggers -= RegisterAbility;
         }
 
         private void RegisterAbility()
@@ -50,13 +50,16 @@ namespace Abilities
         {
             if (HostShip.Owner.Ships.Count > 1 && HostShip.Tokens.HasToken(typeof(Tokens.FocusToken)))
             {
-                Messages.ShowInfoToHuman("Kyle Katarn: Select a ship to receive a Focus token");
-
                 SelectTargetForAbility(
                     SelectAbilityTarget,
                     FilterAbilityTarget,
                     GetAiAbilityPriority,
-                    HostShip.Owner.PlayerNo
+                    HostShip.Owner.PlayerNo,
+                    true,
+                    null,
+                    HostShip.PilotName,
+                    "Choose another ship to assign 1 of your Focus tokens to it.",
+                    HostShip.ImageUrl
                 );
             }
             else

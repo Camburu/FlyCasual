@@ -30,15 +30,15 @@ namespace Abilities
     {
         public override void ActivateAbility()
         {
-            HostShip.OnCombatPhaseStart += RegisterEpsilonLeaderAbility;
+            Phases.OnCombatPhaseStart_Triggers += RegisterEpsilonLeaderAbility;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.OnCombatPhaseStart -= RegisterEpsilonLeaderAbility;
+            Phases.OnCombatPhaseStart_Triggers -= RegisterEpsilonLeaderAbility;
         }
 
-        private void RegisterEpsilonLeaderAbility(GenericShip genericShip)
+        private void RegisterEpsilonLeaderAbility()
         {
             RegisterAbilityTrigger(TriggerTypes.OnCombatPhaseStart, UseEpsilonLeaderAbility);
         }
@@ -50,10 +50,10 @@ namespace Abilities
             Vector2 range = new Vector2(1, 1);
             foreach(GenericShip friendlyShip in Board.BoardManager.GetShipsAtRange(HostShip, range, Team.Type.Friendly))
             {
-                GenericToken focusToken = friendlyShip.Tokens.GetToken(typeof(FocusToken));
-                if (focusToken != null)
+                GenericToken stressToken = friendlyShip.Tokens.GetToken(typeof(StressToken));
+                if (stressToken != null)
                 {
-                    tokensToRemove.Add(focusToken);
+                    tokensToRemove.Add(stressToken);
                 }
             }
 

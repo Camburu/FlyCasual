@@ -9,6 +9,11 @@ public static class DamageDecks
 {
     private static List<DamageDeck> damadeDecks;
 
+    public static bool Initialized
+    {
+        get { return damadeDecks != null; }
+    }
+
     public static void Initialize()
     {
         damadeDecks = new List<DamageDeck>
@@ -28,7 +33,7 @@ public static class DamageDecks
         return damadeDecks.Find(n => n.PlayerNo == playerNo);
     }
 
-    public static void DrawDamageCard(PlayerNo playerNo, bool isFaceup, Action<GenericDamageCard, EventArgs> doWithDamageCard, EventArgs e)
+    public static void DrawDamageCard(PlayerNo playerNo, bool isFaceup, Action<EventArgs> doWithDamageCard, EventArgs e)
     {
         GetDamageDeck(playerNo).DrawDamageCard(isFaceup, doWithDamageCard, e);
     }
@@ -79,7 +84,12 @@ public class DamageDeck
         }
     }
 
-    public void DrawDamageCard(bool isFaceup, Action<GenericDamageCard, EventArgs> doWithDamageCard, EventArgs e)
+    public void PutOnTop(GenericDamageCard card)
+    {
+        Deck.Insert(0, card);
+    }
+
+    public void DrawDamageCard(bool isFaceup, Action<EventArgs> doWithDamageCard, EventArgs e)
     {
         if (Deck.Count == 0) ReCreateDeck();
 
@@ -89,7 +99,7 @@ public class DamageDeck
 
         Combat.CurrentCriticalHitCard = drawedCard;
 
-        doWithDamageCard(drawedCard, e);
+        doWithDamageCard(e);
     }
 
     public void RemoveFromDamageDeck(GenericDamageCard card)

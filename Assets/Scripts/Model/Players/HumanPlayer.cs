@@ -19,33 +19,44 @@ namespace Players
         public override void PerformAction()
         {
             (Phases.CurrentSubPhase as SubPhases.ActionDecisonSubPhase).ShowActionDecisionPanel();
-            UI.ShowSkipButton();
         }
 
         public override void PerformFreeAction()
         {
             (Phases.CurrentSubPhase as SubPhases.FreeActionDecisonSubPhase).ShowActionDecisionPanel();
-            UI.ShowSkipButton();
         }
 
         public override void PerformAttack()
         {
+            base.PerformAttack();
+
             UI.ShowSkipButton();
         }
 
         public override void UseOwnDiceModifications()
         {
+            base.UseOwnDiceModifications();
+
             Combat.ShowOwnDiceResultMenu();
         }
 
         public override void UseOppositeDiceModifications()
         {
+            base.UseOppositeDiceModifications();
+
             Combat.ShowOppositeDiceResultMenu();
+        }
+
+        public override void UseCompareResultsDiceModifications()
+        {
+            base.UseCompareResultsDiceModifications();
+
+            Combat.ShowCompareResultsMenu();
         }
 
         public override void TakeDecision()
         {
-            GameObject.Find("UI").transform.Find("DecisionsPanel").gameObject.SetActive(true);
+            (Phases.CurrentSubPhase as SubPhases.DecisionSubPhase).ShowDecisionWindowUI();
         }
 
         public override void AfterShipMovementPrediction()
@@ -113,9 +124,13 @@ namespace Players
 
         public override void SelectShipForAbility()
         {
-            (Phases.CurrentSubPhase as SubPhases.SelectShipSubPhase).HighlightShipsToSelect();
+            GameModes.GameMode.CurrentGameMode.StartSyncSelectShipPreparation();
         }
 
+        public override void RerollManagerIsPrepared()
+        {
+            DiceRerollManager.CurrentDiceRerollManager.ShowConfirmButton();
+        }
     }
 
 }

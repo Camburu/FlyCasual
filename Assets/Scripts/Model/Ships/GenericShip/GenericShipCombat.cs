@@ -129,7 +129,8 @@ namespace Ship
 
         public event EventHandlerShip OnCheckCancelCritsFirst;
 
-        public event EventHandler OnDefence;
+        public event EventHandler OnDefenceStartAsAttacker;
+        public event EventHandler OnDefenceStartAsDefender;
 
         public event EventHandler OnAtLeastOneCritWasCancelledByDefender;
 
@@ -172,6 +173,7 @@ namespace Ship
         public event EventHandlerShip OnAttackFinish;
         public event EventHandlerShip OnAttackFinishAsAttacker;
         public event EventHandlerShip OnAttackFinishAsDefender;
+        public static event EventHandlerShip OnAttackFinishGlobal;
 
         public event EventHandlerBombDropTemplates OnGetAvailableBombDropTemplates;
         public event EventHandlerBarrelRollTemplates OnGetAvailableBarrelRollTemplates;
@@ -204,16 +206,6 @@ namespace Ship
         public void CallOnActionSubPhaseStart()
         {
             if (OnActionSubPhaseStart != null) OnActionSubPhaseStart(this);
-        }
-
-        public void CallOnCombatPhaseStart()
-        {
-            if (OnCombatPhaseStart != null) OnCombatPhaseStart(this);
-        }
-
-        public void CallOnCombatPhaseEnd()
-        {
-            if (OnCombatPhaseEnd != null) OnCombatPhaseEnd(this);
         }
 
         public bool CallCanPerformAttack(bool result = true, List<string> stringList = null, bool isSilent = false)
@@ -253,9 +245,11 @@ namespace Ship
             }
         }
 
-        public void CallDiceAboutToBeRolled()
+        public void CallDiceAboutToBeRolled(Action callback)
         {
             if (OnDiceAboutToBeRolled != null) OnDiceAboutToBeRolled();
+
+            Triggers.ResolveTriggers(TriggerTypes.OnDiceAboutToBeRolled, callback);
         }
 
         public void CallShotStart()
@@ -278,11 +272,18 @@ namespace Ship
             if (OnCheckCancelCritsFirst != null) OnCheckCancelCritsFirst(this);
         }
 
-        public void CallDefenceStart()
+        public void CallDefenceStartAsAttacker()
         {
             ClearAlreadyExecutedOppositeActionEffects();
             ClearAlreadyExecutedActionEffects();
-            if (OnDefence != null) OnDefence();
+            if (OnDefenceStartAsAttacker != null) OnDefenceStartAsAttacker();
+        }
+
+        public void CallDefenceStartAsDefender()
+        {
+            ClearAlreadyExecutedOppositeActionEffects();
+            ClearAlreadyExecutedActionEffects();
+            if (OnDefenceStartAsDefender != null) OnDefenceStartAsDefender();
         }
 
         public void CallShotHitAsAttacker()
@@ -335,6 +336,7 @@ namespace Ship
         public void CallAttackFinish()
         {
             if (OnAttackFinish != null) OnAttackFinish(this);
+            if (OnAttackFinishGlobal != null) OnAttackFinishGlobal(this);
         }
 
         public void CallAttackFinishAsAttacker()
@@ -498,7 +500,7 @@ namespace Ship
             DamageDecks.DrawDamageCard(Owner.PlayerNo, isFaceup, ProcessDrawnDamageCard, e);
         }
 
-        public void ProcessDrawnDamageCard(GenericDamageCard damageCard, EventArgs e)
+        public void ProcessDrawnDamageCard(EventArgs e)
         {
             AssignedDamageDiceroll.CancelHits(1);
 

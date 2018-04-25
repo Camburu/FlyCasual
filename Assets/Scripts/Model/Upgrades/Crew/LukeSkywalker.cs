@@ -66,17 +66,18 @@ namespace Abilities
         {
             if (!HostShip.IsCannotAttackSecondTime)
             {
-                Messages.ShowInfo(HostShip.PilotName + " can perform second attack\nfrom primary weapon");
-
                 HostShip.IsCannotAttackSecondTime = true;
 
                 HostShip.AfterGenerateAvailableActionEffectsList += AddLukeSkywalkerCrewAbility;
-                Phases.OnCombatPhaseEnd += RemoveLukeSkywalkerCrewAbility;
+                Phases.OnCombatPhaseEnd_NoTriggers += RemoveLukeSkywalkerCrewAbility;
 
                 Combat.StartAdditionalAttack(
                     HostShip,
                     FinishAdditionalAttack,
-                    IsPrimaryWeaponShot
+                    IsPrimaryWeaponShot,
+                    HostUpgrade.Name,
+                    "You may perform a primary weapon attack.",
+                    HostUpgrade.ImageUrl
                 );
             }
             else
@@ -117,7 +118,7 @@ namespace Abilities
 
         public void RemoveLukeSkywalkerCrewAbility()
         {
-            Phases.OnCombatPhaseEnd -= RemoveLukeSkywalkerCrewAbility;
+            Phases.OnCombatPhaseEnd_NoTriggers -= RemoveLukeSkywalkerCrewAbility;
             HostShip.AfterGenerateAvailableActionEffectsList -= AddLukeSkywalkerCrewAbility;
         }
 

@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Linq;
+using GameModes;
 
 namespace SubPhases
 {
@@ -57,21 +58,25 @@ namespace SubPhases
         public string InfoText;
         private List<Decision> decisions = new List<Decision>();
         public string DefaultDecisionName;
-        protected Players.GenericPlayer DecisionOwner;
+        public Players.GenericPlayer DecisionOwner;
         public bool ShowSkipButton;
         public DecisionViewTypes DecisionViewType = DecisionViewTypes.TextButtons;
+        public Action OnSkipButtonIsPressed;
+        public bool WasDecisionButtonPressed;
 
         private const float defaultWindowHeight = 75;
         private const float buttonHeight = 45;
 
         public override void Start()
         {
+            base.Start();
+
             IsTemporary = true;
 
             decisionPanel = GameObject.Find("UI").transform.Find("DecisionsPanel").gameObject;
             buttonsHolder = decisionPanel.transform.Find("Center/DecisionsPanel").gameObject;
 
-            PrepareDecision(StartIsFinished);
+            GameMode.CurrentGameMode.StartSyncDecisionPreparation();
         }
 
         public virtual void PrepareDecision(Action callBack)
@@ -79,7 +84,7 @@ namespace SubPhases
             callBack();
         }
 
-        private void StartIsFinished()
+        public void StartIsFinished()
         {
             Initialize();
 
@@ -186,7 +191,7 @@ namespace SubPhases
                             EventTrigger.Entry entry = new EventTrigger.Entry();
                             entry.eventID = EventTriggerType.PointerClick;
                             entry.callback.AddListener(
-                                (data) => { GameModes.GameMode.CurrentGameMode.TakeDecision(decision, button); }
+                                (data) => { DecisionButtonWasPressed(decision, button); }
                             );
                             trigger.triggers.Add(entry);
 
@@ -198,7 +203,7 @@ namespace SubPhases
                             script.Initialize(
                                 decision.Name,
                                 decision.Tooltip,
-                                delegate { GameModes.GameMode.CurrentGameMode.TakeDecision(decision, button); },
+                                delegate { GameMode.CurrentGameMode.TakeDecision(decision, button); },
                                 decision.Count
                             );
 
@@ -213,37 +218,57 @@ namespace SubPhases
 
                 if (DecisionOwner == null) DecisionOwner = Roster.GetPlayer(Phases.CurrentPhasePlayer);
 
-                if (ShowSkipButton) UI.ShowSkipButton();
+                if (ShowSkipButton) UI.ShowSkipButton(); else UI.HideSkipButton();
 
-                DecisionOwner.TakeDecision();
+                GameMode.CurrentGameMode.FinishSyncDecisionPreparation();
+            }
+        }
+
+        private void DecisionButtonWasPressed(Decision decision, GameObject button)
+        {
+            if (!WasDecisionButtonPressed)
+            {
+                WasDecisionButtonPressed = true;
+                GameMode.CurrentGameMode.TakeDecision(decision, button);
             }
         }
 
         public override void Pause()
         {
-            HidePanel();
+            HideDecisionWindowUI();
         }
 
         public override void Resume()
         {
+            HideDecisionWindowUI();
+
+            base.Resume();
+
             Phases.CurrentSubPhase = this;
             UpdateHelpInfo();
-            Initialize();
+
+            GameMode.CurrentGameMode.StartSyncDecisionPreparation();
         }
 
         public override void Next()
         {
-            HidePanel();
+            HideDecisionWindowUI();
             Phases.CurrentSubPhase = PreviousSubPhase;
             UpdateHelpInfo();
         }
 
-        private void HidePanel()
+        protected void HideDecisionWindowUI()
         {
-            decisionPanel.gameObject.SetActive(false);
-            foreach (Transform button in buttonsHolder.transform)
+            decisions = new List<Decision>();
+
+            if (decisionPanel != null) decisionPanel.gameObject.SetActive(false);
+
+            if (buttonsHolder != null)
             {
-                MonoBehaviour.Destroy(button.gameObject);
+                foreach (Transform button in buttonsHolder.transform)
+                {
+                    MonoBehaviour.Destroy(button.gameObject);
+                }
             }
         }
 
@@ -271,12 +296,8 @@ namespace SubPhases
 
         public static void ConfirmDecision()
         {
-            Tooltips.EndTooltip();
-            UI.HideSkipButton();
-
             Action callBack = Phases.CurrentSubPhase.CallBack;
-            Phases.FinishSubPhase(Phases.CurrentSubPhase.GetType());
-            Phases.CurrentSubPhase.Resume();
+            ConfirmDecisionNoCallback();
             callBack();
         }
 
@@ -291,7 +312,14 @@ namespace SubPhases
 
         public override void SkipButton()
         {
+            if (OnSkipButtonIsPressed != null) OnSkipButtonIsPressed();
             ConfirmDecision();
+        }
+
+        public void ShowDecisionWindowUI()
+        {
+            WasDecisionButtonPressed = false;
+            GameObject.Find("UI").transform.Find("DecisionsPanel").gameObject.SetActive(true);
         }
 
     }

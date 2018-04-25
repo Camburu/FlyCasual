@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using GameModes;
 
 namespace Movement
 {
@@ -415,24 +416,22 @@ namespace Movement
             TheShip.ApplyRotationHelpers();
             TheShip.ResetRotationHelpers();
 
-            ManeuverEndRotation(FinishMovementEvents);
+            // TODO: Use Selection.ActiveShip instead of TheShip
+            Selection.ActiveShip = TheShip;
+
+            ManeuverEndRotation(FinishManeuverExecution);
+        }
+
+        private void FinishManeuverExecution()
+        {
+            MovementTemplates.HideLastMovementRuler();
+
+            GameMode.CurrentGameMode.FinishMovementExecution();
         }
 
         protected virtual void ManeuverEndRotation(Action callBack)
         {
             callBack();
-        }
-
-        protected virtual void FinishMovementEvents()
-        { 
-            MovementTemplates.HideLastMovementRuler();
-
-            TheShip.CallExecuteMoving();
-
-            //Called as callbacks
-            //TargetShip.FinishMovement();
-            //TargetShip.FinishPosition();
-            //Phases.FinishSubPhase(typeof(SubPhases.MovementExecutionSubPhase));
         }
 
         //TODO: Rework

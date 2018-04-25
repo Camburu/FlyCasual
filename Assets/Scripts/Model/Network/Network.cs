@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.Match;
 using UnityEngine.Networking.Types;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public static partial class Network
@@ -115,8 +116,8 @@ public static partial class Network
 
     public static void FinishTask()
     {
-        string logEntryPostfix = (IsServer) ? "" : "\n";
-        Console.Write("Client finished task" + logEntryPostfix, LogTypes.Network);
+        string taskName = (LastNetworkCallback != null) ? LastNetworkCallback.TaskName : "undefined";
+        Console.Write("Client finished task: " + taskName, LogTypes.Network);
         CurrentPlayer.CmdFinishTask();
     }
 
@@ -250,6 +251,11 @@ public static partial class Network
         CurrentPlayer.CmdSwitchToOwnDiceModifications();
     }
 
+    public static void CompareResultsAndDealDamage()
+    {
+        CurrentPlayer.CmdCompareResultsAndDealDamage();
+    }
+
     // CONFIRM DICE ROLL CHECK
 
     public static void ConfirmDiceRollCheckResults()
@@ -274,6 +280,11 @@ public static partial class Network
     public static void SyncDiceRerollResults()
     {
         if (IsServer) CurrentPlayer.CmdSyncDiceRerollResults();
+    }
+
+    public static void SyncDiceRollInResults()
+    {
+        if (IsServer) CurrentPlayer.CmdSyncDiceRollInResults();
     }
 
     public static void CompareDiceSidesAgainstServer(DieSide[] dieSides)
@@ -342,14 +353,6 @@ public static partial class Network
         if (IsServer) CurrentPlayer.CmdSyncSelectedDiceAndReroll();
     }
 
-    // UI
-
-    public static void EnableNetwork()
-    {
-        NetworkManagerHUD netUI = GameObject.Find("NetworkManager").GetComponentInChildren<NetworkManagerHUD>();
-        netUI.showGUI = !netUI.showGUI;
-    }
-
     // SWARM MANAGER
 
     public static void SetSwarmManagerManeuver(string maneuverCode)
@@ -361,21 +364,23 @@ public static partial class Network
 
     public static void CreateMatch(string roomName, string password)
     {
+        ToggleCreateMatchButtons(false);
+
         roomName = roomName.Replace('|', ' '); // Remove info separator
         roomName = new RoomInfo(roomName, true).ToString();
-
-        GameObject createRoomButton = GameObject.Find("UI/Panels/CreateMatchPanel/ControlsPanel/CreateRoomButton");
-        createRoomButton.SetActive(false);
 
         NetworkManager.singleton.StartMatchMaker();
         NetworkManager.singleton.matchMaker.CreateMatch(roomName, 2, true, password, "", "", 0, 0, OnInternetMatchCreate);
     }
 
+    private static void ToggleCreateMatchButtons(bool isActive)
+    {
+        GameObject.Find("UI/Panels/CreateMatchPanel/ControlsPanel/CreateRoomButton").SetActive(isActive);
+        GameObject.Find("UI/Panels/CreateMatchPanel/ControlsPanel/BackButton").SetActive(isActive);
+    }
+
     private static void OnInternetMatchCreate(bool success, string extendedInfo, MatchInfo matchInfo)
     {
-        GameObject createRoomButton = GameObject.Find("UI/Panels/CreateMatchPanel/ControlsPanel/CreateRoomButton");
-        createRoomButton.SetActive(true);
-
         if (success)
         {
             string roomName = GameObject.Find("UI/Panels/CreateMatchPanel/Panel/Name").GetComponentInChildren<InputField>().text;
@@ -392,6 +397,8 @@ public static partial class Network
         else
         {
             Messages.ShowError("Create match failed");
+
+            ToggleCreateMatchButtons(true);
         }
     }
 
@@ -399,6 +406,7 @@ public static partial class Network
     {
         ToggleNoRoomsMessage(false);
         ToggleBrowseRoomsControls(false);
+        ToggleLoadingMessage(true);
 
         NetworkManager.singleton.StartMatchMaker();
         NetworkManager.singleton.matchMaker.ListMatches(0, int.MaxValue, "", false, 0, 0, OnInternetMatchList);
@@ -406,6 +414,7 @@ public static partial class Network
 
     private static void OnInternetMatchList(bool success, string extendedInfo, List<MatchInfoSnapshot> matches)
     {
+        ToggleLoadingMessage(false);
         ToggleBrowseRoomsControls(true);
 
         if (success)
@@ -443,6 +452,11 @@ public static partial class Network
     private static void ToggleBrowseRooms(bool isActive)
     {
         GameObject.Find("UI/Panels").transform.Find("BrowseRoomsPanel").gameObject.SetActive(isActive);
+    }
+
+    private static void ToggleLoadingMessage(bool isActive)
+    {
+        GameObject.Find("UI/Panels/BrowseRoomsPanel").transform.Find("LoadingMessage").gameObject.SetActive(isActive);
     }
 
     public static void ShowListOfRooms(List<MatchInfoSnapshot> matchesList)
@@ -510,15 +524,19 @@ public static partial class Network
 
     public static void JoinCurrentRoomByParameters(string password = "")
     {
-        if(!SelectedMatchSnapshot.isPrivate) ToggleBrowseRooms(false);
+        if (!SelectedMatchSnapshot.isPrivate) ToggleBrowseRooms(false); else ToggleJoinPrivateMatchButtons(false);
 
         NetworkManager.singleton.matchMaker.JoinMatch(SelectedMatchSnapshot.networkId, password, "", "", 0, 0, OnJoinInternetMatch);
     }
 
+    private static void ToggleJoinPrivateMatchButtons(bool isActive)
+    {
+        GameObject.Find("UI/Panels/JoinPrivateMatchPanel/ControlsPanel/JoinMatchButton").SetActive(isActive);
+        GameObject.Find("UI/Panels/JoinPrivateMatchPanel/ControlsPanel/BackButton").SetActive(isActive);
+    }
+
     private static void OnJoinInternetMatch(bool success, string extendedInfo, MatchInfo matchInfo)
     {
-        if (!SelectedMatchSnapshot.isPrivate) ToggleBrowseRooms(true);
-
         if (success)
         {
             CurrentMatch = matchInfo;
@@ -533,6 +551,8 @@ public static partial class Network
             if (SelectedMatchSnapshot.isPrivate)
             {
                 Messages.ShowError("Cannot join match\nCheck password");
+                ToggleJoinPrivateMatchButtons(true);
+                //ToggleBrowseRooms(true);
             }
             else
             {
@@ -576,4 +596,54 @@ public static partial class Network
         if (IsServer) CurrentPlayer.CmdSyncDecks(playerNo, seed);
     }
 
+    public static void CombatActivation(int shipId)
+    {
+        CurrentPlayer.CmdCombatActivation(shipId);
+    }
+
+    public static void CmdSyncNotifications()
+    {
+        if (IsServer) CurrentPlayer.CmdSyncNotifications();
+    }
+
+    public static void SyncDecisionPreparation()
+    {
+        if (IsServer) CurrentPlayer.CmdSyncDecisionPreparation();
+    }
+
+    public static void SyncSelectShipPreparation()
+    {
+        if (IsServer) CurrentPlayer.CmdSyncSelectShipPreparation();
+    }
+
+    public static void StartDiceRerollExecution()
+    {
+        CurrentPlayer.CmdStartDiceRerollExecution();
+    }
+
+    public static void ReturnToMainMenu()
+    {
+        // if online match in progress
+        if (CurrentPlayer != null)
+        {
+            CurrentPlayer.CmdReturnToMainMenu(IsServer);
+        }
+        else // if opponent already had surrender
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+    }
+
+    public static void QuitToDesktop()
+    {
+        // if online match in progress
+        if (CurrentPlayer != null)
+        {
+            CurrentPlayer.CmdQuitToDesktop(IsServer);
+        }
+        else // if opponent already had surrender
+        {
+            Application.Quit();
+        }
+    }
 }

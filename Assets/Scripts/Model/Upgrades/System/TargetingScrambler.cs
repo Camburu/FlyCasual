@@ -59,7 +59,12 @@ namespace Abilities
                 AssignScrambledCondition,
                 FilterAbilityTargets,
                 GetAiAbilityPriority,
-                HostShip.Owner.PlayerNo
+                HostShip.Owner.PlayerNo,
+                true,
+                null,
+                HostUpgrade.Name,
+                "Choose another ship to assign \"Scrambled\" condition to it.\nYou will receive weapons disabled token.",
+                HostUpgrade.ImageUrl
             );
         }
 
@@ -69,7 +74,7 @@ namespace Abilities
 
             TargetShip.Tokens.AssignCondition(new ScrambledCondition(TargetShip));
             TargetShip.OnTryAddAvailableActionEffect += UseDiceModificationRestriction;
-            Phases.OnCombatPhaseEnd += RemoveScrambledCondition;
+            Phases.OnCombatPhaseEnd_NoTriggers += RemoveScrambledCondition;
 
             HostShip.Tokens.AssignToken(
                 new WeaponsDisabledToken(HostShip),
@@ -99,7 +104,7 @@ namespace Abilities
 
         private void RemoveScrambledCondition()
         {
-            Phases.OnCombatPhaseEnd -= RemoveScrambledCondition;
+            Phases.OnCombatPhaseEnd_NoTriggers -= RemoveScrambledCondition;
 
             TargetShip.Tokens.RemoveCondition(typeof(ScrambledCondition));
             TargetShip.OnTryAddAvailableActionEffect -= UseDiceModificationRestriction;

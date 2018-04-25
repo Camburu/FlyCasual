@@ -17,6 +17,8 @@ namespace SubPhases
 
         public override void Start()
         {
+            base.Start();
+
             IsTemporary = true;
             CallBack = FinishAction;
 
@@ -33,11 +35,19 @@ namespace SubPhases
             if (Combat.AttackStep == CombatStep.Attack)
             {
                 ShowAttackAnimationAndSound();
+                Combat.Attacker.CallDiceAboutToBeRolled(RollDice);
             }
+            else
+            {
+                Combat.Defender.CallDiceAboutToBeRolled(RollDice);
+            }
+        }
 
-            DiceRoll DiceRollCheck;
-            DiceRollCheck = new DiceRoll(diceType, diceCount, DiceRollCheckType.Combat);
-            DiceRollCheck.Roll(SyncDiceResults);
+        private void RollDice()
+        {
+            DiceRoll DiceRollCombat;
+            DiceRollCombat = new DiceRoll(diceType, diceCount, DiceRollCheckType.Combat);
+            DiceRollCombat.Roll(SyncDiceResults);
         }
 
         private void ShowAttackAnimationAndSound()
@@ -127,12 +137,14 @@ namespace SubPhases
 
         public override void Pause()
         {
-            GameObject.Find("UI/CombatDiceResultsPanel").gameObject.SetActive(false);
+            GameObject.Find("UI").transform.Find("CombatDiceResultsPanel").gameObject.SetActive(false);
         }
 
         public override void Resume()
         {
-            GameObject.Find("UI/CombatDiceResultsPanel").gameObject.SetActive(true);
+            base.Resume();
+
+            GameObject.Find("UI").transform.Find("CombatDiceResultsPanel").gameObject.SetActive(true);
         }
 
         public override void Next()

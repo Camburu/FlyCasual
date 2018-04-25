@@ -36,15 +36,15 @@ namespace Abilities
 	{
 		public override void ActivateAbility()
 		{
-			HostShip.OnCombatPhaseStart += CheckOldTerochAbility;
+            Phases.OnCombatPhaseStart_Triggers += CheckOldTerochAbility;
 		}
 
 		public override void DeactivateAbility()
 		{
-			HostShip.OnCombatPhaseStart -= CheckOldTerochAbility;
+            Phases.OnCombatPhaseStart_Triggers -= CheckOldTerochAbility;
 		}
 
-		private void CheckOldTerochAbility(GenericShip host)
+		private void CheckOldTerochAbility()
 		{
 			// give user the option to use ability
 			RegisterAbilityTrigger(TriggerTypes.OnCombatPhaseStart, AskSelectShip);
@@ -60,7 +60,12 @@ namespace Abilities
                     ActivateOldTerochAbility,
                     FilterTargetsOfAbility,
                     GetAiPriorityOfTarget,
-                    HostShip.Owner.PlayerNo
+                    HostShip.Owner.PlayerNo,
+                    true,
+                    null,
+                    HostShip.PilotName,
+                    "Choose a ship. If you are inside its firing arc, it discards all focus and evade tokens.",
+                    HostShip.ImageUrl
                 );
 			} else {
 				// no enemy in range

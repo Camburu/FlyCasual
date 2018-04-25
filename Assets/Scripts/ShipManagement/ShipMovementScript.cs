@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 using GameModes;
 using Ship;
 using System.Linq;
+using SubPhases;
 
 public class ShipMovementScript : MonoBehaviour {
 
@@ -148,12 +149,7 @@ public class ShipMovementScript : MonoBehaviour {
             EventHandler = DoMovementTriggerHandler
         });
 
-        Triggers.ResolveTriggers(TriggerTypes.OnManeuver, FinishManeuverExecution);
-    }
-
-    private static void FinishManeuverExecution()
-    {
-        GameMode.CurrentGameMode.FinishMovementExecution();
+        Triggers.ResolveTriggers(TriggerTypes.OnManeuver, delegate { Phases.FinishSubPhase(typeof(MovementExecutionSubPhase)); });
     }
 
 }

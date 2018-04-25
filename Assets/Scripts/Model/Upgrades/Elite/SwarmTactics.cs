@@ -28,12 +28,12 @@ namespace Abilities
     {
         public override void ActivateAbility()
         {
-            Phases.OnCombatPhaseStart += PlanSwarmTacticsPilotAbility;
+            Phases.OnCombatPhaseStart_Triggers += PlanSwarmTacticsPilotAbility;
         }
 
         public override void DeactivateAbility()
         {
-            Phases.OnCombatPhaseStart -= PlanSwarmTacticsPilotAbility;
+            Phases.OnCombatPhaseStart_Triggers -= PlanSwarmTacticsPilotAbility;
         }
 
         private void PlanSwarmTacticsPilotAbility()
@@ -127,7 +127,7 @@ namespace SubPhases
                 this.newPilotSkill = newPilotSkill;
 
                 host.AddPilotSkillModifier(this);
-                Phases.OnEndPhaseStart += RemoveSwarmTacticsModifieer;
+                Phases.OnEndPhaseStart_NoTriggers += RemoveSwarmTacticsModifieer;
             }
 
             public void ModifyPilotSkill(ref int pilotSkill)
@@ -138,6 +138,8 @@ namespace SubPhases
             private void RemoveSwarmTacticsModifieer()
             {
                 host.RemovePilotSkillModifier(this);
+
+                Phases.OnEndPhaseStart_NoTriggers -= RemoveSwarmTacticsModifieer;
             }
         }
 

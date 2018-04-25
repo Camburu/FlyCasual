@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Ship;
 using System;
+using System.Linq;
 
 namespace Ship
 {
@@ -32,22 +33,22 @@ namespace Abilities
 
         public override void ActivateAbility()
         {
-            HostShip.OnCombatPhaseStart += RegisterPilotAbility;
+            Phases.OnCombatPhaseStart_Triggers += RegisterPilotAbility;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.OnCombatPhaseStart -= RegisterPilotAbility;
+            Phases.OnCombatPhaseStart_Triggers -= RegisterPilotAbility;
         }
 
-        private void RegisterPilotAbility(GenericShip ship)
+        private void RegisterPilotAbility()
         {
             RegisterAbilityTrigger(TriggerTypes.OnCombatPhaseStart, AssignStressTokens);
         }
 
         private void AssignStressTokens(object sender, System.EventArgs e)
         {
-            shipsToAssignStress = new List<GenericShip>(HostShip.ShipsBumped);
+            shipsToAssignStress = new List<GenericShip>(HostShip.ShipsBumped.Where(n => n.Owner.PlayerNo != HostShip.Owner.PlayerNo));
             AssignStressTokenRecursive();
         }
 

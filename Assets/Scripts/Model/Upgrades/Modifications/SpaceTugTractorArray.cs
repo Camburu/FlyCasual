@@ -3,6 +3,7 @@ using Ship;
 using Upgrade;
 using SubPhases;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace UpgradesList
 {
@@ -65,11 +66,16 @@ namespace ActionsList
             SelectSpacetugTargetSubPhase newPhase = (SelectSpacetugTargetSubPhase) Phases.StartTemporarySubPhaseNew(
                 "Select target for Spacetug Tractor Array",
                 typeof(SelectSpacetugTargetSubPhase),
-                delegate { }
+                FinishAction
             );
 
             newPhase.SpacetugOwner = this.Host;
             newPhase.Start();
+        }
+
+        private void FinishAction()
+        {
+            Phases.CurrentSubPhase.CallBack();
         }
     }
 }
@@ -80,18 +86,20 @@ namespace SubPhases
     public class SelectSpacetugTargetSubPhase : SelectShipSubPhase
     {
         public GenericShip SpacetugOwner;
+        public GenericUpgrade SpacetugUpgrade;
 
         public override void Prepare()
         {
-            targetsAllowed.Add(TargetTypes.Enemy);
-            targetsAllowed.Add(TargetTypes.OtherFriendly);
-            maxRange = 1;
-            finishAction = SelectSpacetugTarget;
-
-            FilterTargets = FilterAbilityTargets;
-            GetAiPriority = GetAiAbilityPriority;
-
-            UI.ShowSkipButton();
+            PrepareByParameters(
+                SelectSpacetugTarget,
+                FilterAbilityTargets,
+                GetAiAbilityPriority,
+                Selection.ThisShip.Owner.PlayerNo,
+                true,
+                SpacetugUpgrade.Name,
+                "Choose a ship inside your firing arc to assign a tractor beam token to it.",
+                SpacetugUpgrade.ImageUrl
+            );
         }
 
         private bool FilterAbilityTargets(GenericShip ship)
@@ -108,27 +116,11 @@ namespace SubPhases
 
         private void SelectSpacetugTarget()
         {
-            SelectShipSubPhase.FinishSelectionNoCallback();
             MovementTemplates.ReturnRangeRuler();
             Tokens.TractorBeamToken token = new Tokens.TractorBeamToken(TargetShip, SpacetugOwner.Owner);
-            TargetShip.Tokens.AssignToken(token, delegate {
-                Triggers.FinishTrigger();
-                Next();
-            });
+            TargetShip.Tokens.AssignToken(token, SelectShipSubPhase.FinishSelection);
         }
 
-        public override void Next()
-        {
-            Phases.CurrentSubPhase = PreviousSubPhase;
-            Phases.CurrentSubPhase.Next();
-            UpdateHelpInfo();
-            CallBack();
-        }
-
-        public override void SkipButton()
-        {
-            Phases.FinishSubPhase(this.GetType());
-        }
     }
 }
 

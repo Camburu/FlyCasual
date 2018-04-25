@@ -12,6 +12,8 @@ namespace RulesList
 
         public void PlanCheckStress(GenericShip ship)
         {
+            if (Board.BoardManager.IsOffTheBoard(ship)) return;
+
             Triggers.RegisterTrigger(new Trigger()
             {
                 Name = "Check stress",
@@ -75,7 +77,7 @@ namespace RulesList
         {
             if ((movement.ColorComplexity == ManeuverColor.Red) && (ship.Tokens.GetToken(typeof(StressToken)) != null))
             {
-                if (!ship.CanPerformRedManeuversWhileStressed && !DirectionsMenu.ForceShowRedManeuvers)
+                if (!ship.CanPerformRedManeuversWhileStressed && !DirectionsMenu.IsForcedToShowRedManeuvers)
                 {
                     movement.ColorComplexity = ManeuverColor.None;
                 }

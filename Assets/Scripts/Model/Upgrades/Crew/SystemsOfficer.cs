@@ -19,7 +19,10 @@ namespace UpgradesList
             Types.Add(UpgradeType.Crew);            
             Name = "Systems Officer";
             Cost = 2;
+
             isLimited = true;
+
+            AvatarOffset = new Vector2(45, 1);
 
             UpgradeAbilities.Add(new SystemsOfficerAbility());
         }
@@ -47,6 +50,8 @@ namespace Abilities
 
         private void RegisterSystemsOfficerAbility(GenericShip ship)
         {
+            if (BoardManager.IsOffTheBoard(ship)) return;
+
             // After executing a green maneuver
             var movementColor = HostShip.GetLastManeuverColor();
             if (movementColor == Movement.ManeuverColor.Green)
@@ -54,7 +59,7 @@ namespace Abilities
                 // ...check if there is another firendly ship at range 1
                 var friendlyShipsAtRangeOne = HostShip.Owner.Ships.Values
                     .Where(another => another.ShipId != HostShip.ShipId)
-                    .Where(another => Board.BoardManager.GetRangeOfShips(HostShip, another) <= 1)
+                    .Where(another => BoardManager.GetRangeOfShips(HostShip, another) <= 1)
                     .ToArray();
                 if(friendlyShipsAtRangeOne.Any())
                 {
@@ -65,7 +70,17 @@ namespace Abilities
 
         protected void SystemsOfficerEffect(object sender, EventArgs e)
         {
-            SelectTargetForAbility(GrantFreeTargetLock, IsFriendlyShipAtRangeOne, GetAiAbilityPriority, HostShip.Owner.PlayerNo);
+            SelectTargetForAbility(
+                GrantFreeTargetLock,
+                IsFriendlyShipAtRangeOne,
+                GetAiAbilityPriority,
+                HostShip.Owner.PlayerNo,
+                true,
+                null,
+                HostUpgrade.Name,
+                "Choose another ship.\nIt may acquire a Target Lock.",
+                HostUpgrade.ImageUrl
+            );
         }
 
         protected bool IsFriendlyShipAtRangeOne(GenericShip ship)
@@ -82,12 +97,15 @@ namespace Abilities
 
         protected void AcquireFreeTargetLock(object sender, System.EventArgs e)
         {
-            TargetShip.AcquireTargetLock(() =>
-            {
-                Selection.ThisShip = HostShip;
-                Phases.CurrentSubPhase.Resume();
-                Triggers.FinishTrigger();
-            });
+            TargetShip.ChooseTargetToAcquireTargetLock(() =>
+                {
+                    Selection.ThisShip = HostShip;
+                    Phases.CurrentSubPhase.Resume();
+                    Triggers.FinishTrigger();
+                },
+                HostUpgrade.Name,
+                HostUpgrade.ImageUrl
+            );
         }
 
         private int GetAiAbilityPriority(GenericShip ship)

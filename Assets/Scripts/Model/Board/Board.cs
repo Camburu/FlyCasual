@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Ship;
+using System;
 
 namespace Board
 {
@@ -31,6 +33,32 @@ namespace Board
             float width = 10;
             float distance = width / (countShips + 1);
             return WorldIntoBoard(distance);
+        }
+
+        public static void PlaceShip(GenericShip ship, Vector3 position, Vector3 angles, Action callback)
+        {
+            TurnOffStartingZones();
+
+            ship.SetPosition(position);
+            ship.SetAngles(angles);
+            ship.IsSetupPerformed = true;
+
+            ship.CallOnShipIsPlaced(callback);
+        }
+
+        public static bool IsOffTheBoard(GenericShip ship)
+        {
+            bool result = false;
+
+            foreach (var obj in ship.ShipBase.GetStandEdgePoints())
+            {
+                if ((Mathf.Abs(obj.Value.x) > PLAYMAT_SIZE / 2) || (Mathf.Abs(obj.Value.z) > PLAYMAT_SIZE / 2))
+                {
+                    return true;
+                }
+            }
+
+            return result;
         }
 
         //SCALING TOOLS

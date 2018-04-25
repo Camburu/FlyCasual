@@ -7,6 +7,12 @@ using System;
 
 namespace ActionsList
 {
+    public enum DiceModificationTimingType
+    {
+        Normal,
+        Opposite,
+        CompareResults
+    }
 
     public class GenericAction
     {
@@ -23,9 +29,16 @@ namespace ActionsList
         public bool IsTurnsOneFocusIntoSuccess;
         public bool IsTurnsAllFocusIntoSuccess;
 
-        public bool IsOpposite;
+        public DiceModificationTimingType DiceModificationTiming = DiceModificationTimingType.Normal;
 
         public bool CanBePerformedWhileStressed;
+        public virtual bool CanBePerformedAsAFreeAction
+        {
+            get
+            {
+                return true;
+            }
+        }
 
         private GenericShip host;
         public GenericShip Host
@@ -114,12 +127,12 @@ namespace ActionsList
             int result = 0;
 
             /*
-            * 
             * 90 - Cancel crit
             * 50 - Focus action if has target
             * 40 - Evade action
+            * 25 - Reinforce action if there are no enemies
             * 20 - Focus action if no target
-            * 
+            * 10 - Focus action if Expertise is installed
             */
 
             return result;

@@ -1,10 +1,7 @@
 ﻿using Abilities;
 using Ship;
-using SubPhases;
-using System;
-using System.Collections.Generic;
-using UnityEngine;
 using Upgrade;
+using Board;
 
 namespace UpgradesList
 {
@@ -39,16 +36,10 @@ namespace Abilities
 
         private void RegisterTargetingAstromech(GenericShip hostShip)
         {
-            Movement.ManeuverColor movementColor = HostShip.GetLastManeuverColor();
-            if (movementColor != Movement.ManeuverColor.Red)
-            {
-                return;
-            }
+            if (HostShip.GetLastManeuverColor() != Movement.ManeuverColor.Red) return;
+            if (BoardManager.IsOffTheBoard(hostShip)) return;
 
-            RegisterAbilityTrigger(
-                TriggerTypes.OnShipMovementFinish, 
-                AssignAstromechTargetingLock
-            );            
+            RegisterAbilityTrigger(TriggerTypes.OnShipMovementFinish, AssignAstromechTargetingLock);            
         }
 
         private void AssignAstromechTargetingLock(object sender, System.EventArgs e)
@@ -56,7 +47,11 @@ namespace Abilities
             Messages.ShowInfoToHuman("Targeting Astromech: Aquire a Target Lock");
             Sounds.PlayShipSound("Astromech-Beeping-and-whistling");
 
-            HostShip.AcquireTargetLock(Triggers.FinishTrigger);
+            HostShip.ChooseTargetToAcquireTargetLock(
+                Triggers.FinishTrigger,
+                HostUpgrade.Name,
+                HostUpgrade.ImageUrl
+            );
         }
     }
 }

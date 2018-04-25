@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Linq;
 using Ship;
 using System;
+using GameModes;
 
 namespace SubPhases
 {
@@ -14,6 +15,8 @@ namespace SubPhases
 
         public override void Start()
         {
+            base.Start();
+
             Name = "Combat SubPhase";
 
             selectionMode = Team.Type.Friendly;
@@ -125,6 +128,20 @@ namespace SubPhases
 
         public override void FinishPhase()
         {
+            if (Phases.HasOnCombatPhaseEndEvents)
+            {
+                GenericSubPhase subphase = Phases.StartTemporarySubPhaseNew("Notification", typeof(NotificationSubPhase), StartCombatEndSubPhase);
+                (subphase as NotificationSubPhase).TextToShow = "End of combat";
+                subphase.Start();
+            }
+            else
+            {
+                StartCombatEndSubPhase();
+            }
+        }
+
+        private void StartCombatEndSubPhase()
+        {
             Phases.CurrentSubPhase = new CombatEndSubPhase();
             Phases.CurrentSubPhase.Start();
             Phases.CurrentSubPhase.Prepare();
@@ -168,7 +185,8 @@ namespace SubPhases
         public override void DoSelectThisShip(GenericShip ship, int mouseKeyIsPressed)
         {
             Roster.HighlightShipsFiltered(FilterShipsToAttack);
-            ship.CallCombatActivation(delegate { ChangeSelectionMode(Team.Type.Enemy); });
+
+            GameMode.CurrentGameMode.CombatActivation(ship.ShipId);
         }
 
         private bool FilterShipsToAttack(GenericShip ship)
@@ -182,7 +200,7 @@ namespace SubPhases
             selectionMode = Team.Type.Any;
         }
 
-        private void ChangeSelectionMode(Team.Type type)
+        public void ChangeSelectionMode(Team.Type type)
         {
             UI.ShowSkipButton();
             selectionMode = type;
@@ -341,6 +359,8 @@ namespace SubPhases
 
         public override void Resume()
         {
+            base.Resume();
+
             ChangeSelectionMode(Team.Type.Friendly);
         }
 

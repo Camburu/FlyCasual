@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -112,6 +113,15 @@ public partial class DiceRoll
         private set { }
     }
 
+    public int SuccessesCancelable
+    {
+        get
+        {
+            return DiceList.Count(n => ((n.Side == DieSide.Success) || (n.Side == DieSide.Crit)) && (n.IsUncancelable == false));
+        }
+        private set { }
+    }
+
     public int RegularSuccesses
     {
         get
@@ -215,6 +225,19 @@ public partial class DiceRoll
         }
     }
 
+    private void SetAdditionalDiceInitialRotation(int[] randomHolder)
+    {
+        int counter = 0;
+        foreach (Die die in DiceList)
+        {
+            if (die.Model == null || !die.Model.activeSelf)
+            {
+                die.SetInitialRotation(new Vector3(randomHolder[counter], randomHolder[counter + 1], randomHolder[counter + 2]));
+                counter += 3;
+            }
+        }
+    }
+
     private void SetSelectedDiceInitialRotation(int[] randomHolder)
     {
         int counter = 0;
@@ -230,6 +253,21 @@ public partial class DiceRoll
         foreach (Die die in DiceList)
         {
             die.Roll();
+        }
+
+        CalculateResults();
+    }
+
+    private void BeforeRollAdditionalPreparedDice()
+    {
+        Selection.ActiveShip.CallDiceAboutToBeRolled(RollAdditionalPreparedDice);
+    }
+
+    private void RollAdditionalPreparedDice()
+    {
+        foreach (Die die in DiceList)
+        {
+            if (die.Model == null || !die.Model.activeSelf) die.Roll();
         }
 
         CalculateResults();
@@ -350,14 +388,14 @@ public partial class DiceRoll
             cancelLast = DieSide.Success;
         }
 
-
         if (!CancelType(cancelFirst, CancelByDefence, dryRun))
         {
             if (CancelType(cancelLast, CancelByDefence, dryRun))
             {
                 cancelResult = cancelLast;
             }
-        } else
+        }
+        else
         {
             cancelResult = cancelFirst;
         }
@@ -387,13 +425,13 @@ public partial class DiceRoll
     private bool CancelType(DieSide type, bool CancelByDefence, bool dryRun)
     {
         bool found = false;
-        foreach (Die die in DiceList)
+        foreach (Die die in this.DiceList)
         {
             if (die.Side == type)
             {
                 //Cancel dice if it's not a defence cancel or it is and the die is cancellable
-                if ((!CancelByDefence) || (!die.IsUncancellable)) {
-                    if (!dryRun) die.Cancel();
+                if ((!CancelByDefence) || (!die.IsUncancelable)) {
+                    die.Cancel();
                     found = true;
                     return found;
                 }
@@ -409,12 +447,14 @@ public partial class DiceRoll
             CancelHit(false, false); //Generic cancel, not a test
         }
     }
-    public Dictionary<string,int> CancelHitsByDefence(int numToCancel, bool dryRun = false)
+
+    public Dictionary<string,int> CancelHitsByDefence(int countToCancel, bool dryRun = false)
     {
         Dictionary<string, int> results = new Dictionary<string, int>();
         results["crits"] = 0;
         results["hits"] = 0;
-        for (int i = 0; i < numToCancel; i++)
+
+        for (int i = 0; i < countToCancel; i++)
         {
             DieSide result = CancelHit(true, dryRun); //Cancel by defence dice 
             switch(result)
@@ -634,14 +674,68 @@ public partial class DiceRoll
         }
     }
 
-    public void RollAdditionalDice(int number)
+    public void RollInDice(Action callBack)
     {
-        int i = 0;
-        while (i < number)
-        {            
-            AddDice().ShowWithoutRoll();
-            Number++;
-            i++;
+        this.callBack = delegate { TryUnblockButtons(this); callBack(); };
+
+        if (Selection.ActiveShip.Owner.GetType() == typeof(Players.HumanPlayer)) BlockButtons();
+
+        Die newDie = AddDice();
+        if (!Network.IsNetworkGame)
+        {
+            newDie.RandomizeRotation();
+            BeforeRollAdditionalPreparedDice();
+        }
+        else
+        {
+            Network.GenerateRandom(new Vector2(0, 360), 3, SetAdditionalDiceInitialRotation, BeforeRollAdditionalPreparedDice);
+        }
+
+        /*Combat.Defender.CallDiceAboutToBeRolled();
+        Triggers.ResolveTriggers(TriggerTypes.OnDiceAboutToBeRolled, delegate
+        {
+            Combat.CurrentDiceRoll.RollAdditionalDice(1);
+            Combat.CurrentDiceRoll.OrganizeDicePositions();
+            callBack();
+        });*/
+    }
+
+    private void BlockButtons()
+    {
+        ToggleDiceModificationsPanel(false);
+    }
+
+    public void UnblockButtons()
+    {
+        ToggleDiceModificationsPanel(true);
+    }
+
+    public void TryUnblockButtons(DiceRoll diceRoll)
+    {
+        if (!Network.IsNetworkGame)
+        {
+            UnblockButtons();
+        }
+        else
+        {
+            Network.SyncDiceRollInResults();
+        }
+    }
+
+    private void ToggleDiceModificationsPanel(bool isActive)
+    {
+        GameObject.Find("UI/CombatDiceResultsPanel").transform.Find("DiceModificationsPanel").gameObject.SetActive(isActive);
+
+        if (isActive)
+        {
+            Combat.ToggleConfirmDiceResultsButton(true);
+
+            // No branch for opposite dice modifications?
+            Combat.ShowDiceModificationButtons();
+        }
+        else
+        {
+            Combat.HideDiceModificationButtons();
         }
     }
 

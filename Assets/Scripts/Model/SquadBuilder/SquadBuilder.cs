@@ -430,7 +430,7 @@ namespace SquadBuilderNS
 
         public static void SwitchToBattlecene()
         {
-            ShowOpponentSquad();
+            Global.ToggelLoadingScreen(true);
             LoadBattleScene();
         }
 
@@ -439,6 +439,13 @@ namespace SquadBuilderNS
             foreach (var squad in SquadLists)
             {
                 squad.SavedConfiguration = GetSquadInJson(squad.PlayerNo);
+
+                JSONObject playerInfoJson = new JSONObject();
+                playerInfoJson.AddField("NickName", Options.NickName);
+                playerInfoJson.AddField("Title", Options.Title);
+                playerInfoJson.AddField("Avatar", Options.Avatar);
+                squad.SavedConfiguration.AddField("PlayerInfo", playerInfoJson);
+
                 ClearShipsOfPlayer(squad.PlayerNo);
             }
         }
@@ -648,7 +655,7 @@ namespace SquadBuilderNS
 
         // IMPORT / EXPORT
 
-        public static void CreateSquadFromImportedJson(string jsonString, PlayerNo playerNo)
+        public static void CreateSquadFromImportedJson(string jsonString, PlayerNo playerNo, Action callback)
         {
             JSONObject squadJson = new JSONObject(jsonString);
             //LogImportedSquad(squadJson);
@@ -656,10 +663,7 @@ namespace SquadBuilderNS
             SetPlayerSquadFromImportedJson(
                 squadJson,
                 playerNo,
-                delegate
-                {
-                    MainMenu.CurrentMainMenu.ChangePanel("SquadBuilderPanel");
-                }
+                callback
             );
         }
 
@@ -961,6 +965,11 @@ namespace SquadBuilderNS
         public static bool IsNetworkGame
         {
             get { return GetSquadList(PlayerNo.Player2).PlayerType == typeof(NetworkOpponentPlayer); }
+        }
+
+        public static bool IsVsAiGame
+        {
+            get { return GetSquadList(PlayerNo.Player2).PlayerType == typeof(HotacAiPlayer); }
         }
 
         public static void SwitchPlayers()

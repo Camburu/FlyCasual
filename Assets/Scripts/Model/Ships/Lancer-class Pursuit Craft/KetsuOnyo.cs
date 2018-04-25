@@ -37,12 +37,12 @@ namespace Abilities
 
         public override void ActivateAbility()
         {
-            Phases.OnCombatPhaseStart += TryRegisterKetsuOnyoPilotAbility;
+            Phases.OnCombatPhaseStart_Triggers += TryRegisterKetsuOnyoPilotAbility;
         }
 
         public override void DeactivateAbility()
         {
-            Phases.OnCombatPhaseStart -= TryRegisterKetsuOnyoPilotAbility;
+            Phases.OnCombatPhaseStart_Triggers -= TryRegisterKetsuOnyoPilotAbility;
         }
 
         private void TryRegisterKetsuOnyoPilotAbility()
@@ -60,7 +60,11 @@ namespace Abilities
                 FilterTargetsOfAbility,
                 GetAiPriorityOfTarget,
                 HostShip.Owner.PlayerNo,
-                true
+                true,
+                null,
+                HostShip.PilotName,
+                "Choose a ship inside your primary and mobile firing arcs to assign 1 Tractor Beam token to it.",
+                HostShip.ImageUrl
             );
         }
 

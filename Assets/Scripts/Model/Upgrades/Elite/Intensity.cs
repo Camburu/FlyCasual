@@ -6,6 +6,7 @@ using Tokens;
 using Abilities;
 using SubPhases;
 using System;
+using UnityEngine;
 
 namespace UpgradesList
 {
@@ -18,6 +19,8 @@ namespace UpgradesList
             Cost = 2;
 
             AnotherSide = typeof(IntensityExhausted);
+
+            AvatarOffset = new Vector2(49, 0);
 
             UpgradeAbilities.Add(new IntensityAbility());
         }
@@ -39,6 +42,8 @@ namespace UpgradesList
             Cost = 2;
 
             AnotherSide = typeof(Intensity);
+
+            AvatarOffset = new Vector2(39, 0);
 
             UpgradeAbilities.Add(new IntensityExhaustedAbility());
         }
@@ -145,12 +150,12 @@ namespace Abilities
     {
         public override void ActivateAbility()
         {
-            Phases.OnCombatPhaseEnd += CheckAbility;
+            Phases.OnCombatPhaseEnd_NoTriggers += CheckAbility;
         }
 
         public override void DeactivateAbility()
         {
-            Phases.OnCombatPhaseEnd -= CheckAbility;
+            Phases.OnCombatPhaseEnd_NoTriggers -= CheckAbility;
         }
 
         private void CheckAbility()

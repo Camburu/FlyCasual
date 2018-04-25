@@ -27,9 +27,9 @@ namespace ActionsList
 
             if (Combat.AttackStep == CombatStep.Defence)
             {
-                int attackSuccesses = Combat.DiceRollAttack.Successes;
+                int attackSuccessesCancelable = Combat.DiceRollAttack.SuccessesCancelable;
                 int defenceSuccesses = Combat.DiceRollDefence.Successes;
-                if (attackSuccesses > defenceSuccesses)
+                if (attackSuccessesCancelable > defenceSuccesses)
                 {
                     int defenceFocuses = Combat.DiceRollDefence.Focuses;
                     if (defenceFocuses > 0)
@@ -59,6 +59,9 @@ namespace ActionsList
         public override int GetActionPriority()
         {
             int result = 0;
+
+            if (Selection.ThisShip.UpgradeBar.HasUpgradeInstalled(typeof(UpgradesList.Expertise))) return 10;
+
             result = (Actions.HasTarget(Selection.ThisShip)) ? 50 : 20;
             return result;
         }
